@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
+const { Client, GatewayIntentBits, Collection, Events, REST, Routes } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -27,9 +27,17 @@ for (const folder of commandFolders) {
   }
 }
 
-client.once(Events.ClientReady, (c) => {
+client.once(Events.ClientReady, async (c) => {
   console.log(`✅ Bot online como ${c.user.tag}`);
   console.log(`📦 ${client.commands.size} comandos carregados`);
+  try {
+    const rest = new REST().setToken(process.env.DISCORD_TOKEN);
+    const body = [...client.commands.values()].map(cmd => cmd.data.toJSON());
+    await rest.put(Routes.applicationCommands(c.user.id), { body });
+    console.log(`✅ ${body.length} comandos slash registrados!`);
+  } catch (err) {
+    console.error('❌ Erro ao registrar comandos:', err);
+  }
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
